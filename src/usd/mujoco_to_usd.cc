@@ -251,6 +251,8 @@ absl::Status MujocoToUsd::InitializeUsdGeoms(
 }
 
 absl::Status MujocoToUsd::InitializeUsdPhysicsJoint(
+    const size_t mujoco_parent_body_index,
+    const size-t mujoco_child_body_index,
     const size_t mujoco_joint_index,
     const pxr::SdfPath& joint_sdf_path,
     const pxr::SdfPath& parent_body_sdf_path,
@@ -259,7 +261,17 @@ absl::Status MujocoToUsd::InitializeUsdPhysicsJoint(
   usd_joint.GetBody0Rel().AddTarget(parent_body_sdf_path);
   usd_joint.GetBody1Rel().AddTarget(child_body_sdf_path);
 
-  auto axis_quaternion = robotics::math::QuaternionFromAxisAngle<float>(
+  // Pose the joint on the child body.
+  pxr:Vec3f parent_body_translate_joint = {
+    mjmodel_->jnt_pos[3 * mujoco_joint_index],
+    mjmodel_->jnt_pos[3 * mujoco_joint_index + 1],
+    mjmodel_->jnt_pos[3 * mujoco_joint_index + 2],
+  }
+  usd_joint.GetLocalPos1Attr().Set<pxr::Vec3f>(body_pose_joint);
+  
+  // MuJoCo specifies Axis not Rotation, but USD only allows X, Y, Z axes.
+  // Here rotate all USD Joints so that X lines up with the MuJoCo Axis
+  auto child_body_rot_joint = robotics::math::QuaternionFromAxisAngle<float>(
       robotics::math::Vector3d({
         mjmodel_->jnt_axis[3 * mujoco_joint_index],
         mjmodel_->jnt_axis[3 * mujoco_joint_index + 1],
@@ -268,13 +280,70 @@ absl::Status MujocoToUsd::InitializeUsdPhysicsJoint(
       S1Angle::Degrees(0.0));
 
   pxr::GfQuatf pxr_quaternion;
-  pxr_quaternion.SetReal(axis_quaternion.w());
+  pxr_quaternion.SetReal(child_body_rot_joint.w());
   pxr_quaternion.SetImaginary(
-      axis_quaternion.x(), axis_quaternion.y(), axis_quaternion.z());
+      child_body_rot_joint.x(), child_body_rot_joint.y(), child_body_rot_joint.z());
+  usd_joint.GetLocalRot1Attr().Set<pxr::GfQuatf>(pxr_quaternion);
 
-  usd_joint.GetLocalRot0Attr().Set<pxr::GfQuatf>(pxr_quaternion);
+  // The Parent Pose of the joint is redundant and is just calculated from the child pose.
+  // parent_pose_joint = parent_pose_root * root_pose_child * child_pose_joint
+  
+    switch (mjmodel_->jnt_type[mujoco_joint_index]) {
+      case mjJNT_FREE: {
+        // Free Joints should be handled as new root bodies.
+        return absl::InvalidArgumentError(absl::StrCat(
+            "Unimplemented joint type: ",
+            mjmodel_->jnt_type[mujoco_joint_index]));
+      }
+      case mjJNT_BALL: {
+        // Ball joints create all 3 degrees of rotational freedom
+	for (const auto& limit_type : {"RotX", "RotY", "RotZ"}) {
+          auto joint_property =
+              pxr::TfToken(absl::StrCat("limit:", limit_type));
 
-  // QuaternionFromAxisAngle()
+          auto usd_physics_limit_api = pxr::UsdPhysicsLimitAPI::Define(
+              world_stage_,
+              usd_physics_joint.GetPath().AppendProperty(joint_property));
+          usd_physics_limit_api.GetLowAttr().Set<float>(
+              mjmodel_->jnt_range[2 * mujoco_joint_index);
+          usd_physics_limit_api.GetHighAttr().Set<float>(
+              mjmodel_->jnt_range[2 * mujoco_joint_index + 1));
+        }
+        break;
+      }
+      case mjJNT_HINGE: {
+        auto joint_property =
+            pxr::TfToken(absl::StrCat("limit:RotX"));
+
+        auto usd_physics_limit_api = pxr::UsdPhysicsLimitAPI::Define(
+            world_stage_,
+            usd_physics_joint.GetPath().AppendProperty(joint_property));
+        usd_physics_limit_api.GetLowAttr().Set<float>(
+            mjmodel_->jnt_range[2 * mujoco_joint_index);
+        usd_physics_limit_api.GetHighAttr().Set<float>(
+            mjmodel_->jnt_range[2 * mujoco_joint_index + 1));
+        break;
+      }
+      case mjJNT_SLIDE: {
+        auto joint_property =
+            pxr::TfToken(absl::StrCat("limit:TransX"));
+
+        auto usd_physics_limit_api = pxr::UsdPhysicsLimitAPI::Define(
+            world_stage_,
+            usd_physics_joint.GetPath().AppendProperty(joint_property));
+        usd_physics_limit_api.GetLowAttr().Set<float>(
+            mjmodel_->jnt_range[2 * mujoco_joint_index);
+        usd_physics_limit_api.GetHighAttr().Set<float>(
+            mjmodel_->jnt_range[2 * mujoco_joint_index + 1));
+        break;
+      }
+      default: {
+        return absl::InvalidArgumentError(absl::StrCat(
+            "Unimplemented joint type: ",
+            mjmodel_->jnt_type[mujoco_joint_index]));
+      }
+    }
+  
   return absl::OkStatus();
 }
 
