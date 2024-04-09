@@ -161,10 +161,10 @@ absl::Status Circus::InitializeMujocoGeomCapsule(
 
   ASSIGN_OR_RETURN(auto scale, GetScale(capsule_matrix4d));
 
-  // MuJoCo uses half-length
   // Radius
-  geom->size[0] = scale[0] * radius / 2;
+  geom->size[0] = scale[0] * radius;
   // Height
+  // MuJoCo uses half height, USD uses full.
   geom->size[1] = scale[1] * height / 2;
 
   return absl::OkStatus();
@@ -218,10 +218,10 @@ absl::Status Circus::InitializeMujocoGeomCylinder(
 
   ASSIGN_OR_RETURN(auto scale, GetScale(cylinder_matrix4d));
 
-  // MuJoCo uses half-length
   // Radius
-  geom->size[0] = scale[0] * radius / 2;
+  geom->size[0] = scale[0] * radius;
   // Height
+  // MuJoCo uses half height
   geom->size[1] = scale[1] * height / 2;
 
   return absl::OkStatus();
@@ -241,10 +241,9 @@ absl::Status Circus::InitializeMujocoGeomSphere(
 
   ASSIGN_OR_RETURN(auto scale, GetScale(sphere_matrix4d));
 
-  // MuJoCo uses half-length
-  geom->size[0] = scale[0] * radius / 2;
-  geom->size[1] = scale[1] * radius / 2;
-  geom->size[2] = scale[2] * radius / 2;
+  geom->size[0] = scale[0] * radius;
+  geom->size[1] = scale[1] * radius;
+  geom->size[2] = scale[2] * radius;
 
   return absl::OkStatus();
 }
