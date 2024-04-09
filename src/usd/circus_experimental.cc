@@ -140,6 +140,77 @@ absl::StatusOr<std::unique_ptr<CircusExperimental>> CircusExperimental::Create(
 }
 
 absl::StatusOr<std::vector<mjImageOutputBuffer>>
+CircusExperimental::RenderCameraUsd(const std::string& scene_path) {
+  /* auto camera_usd_path = pxr::SdfPath(scene_path);
+
+  pxr::HdRendererPluginRegistry& plugin_registry =
+      pxr::HdRendererPluginRegistry::GetInstance();
+
+  auto* hd_renderer_plugin =
+      plugin_registry.GetRendererPlugin(pxr::TfToken{"HdCyclesRendererPlugin"});
+
+  auto hd_render_delegate =
+      absl::WrapUnique<pxr::HdRenderDelegate>(
+          hd_renderer_plugin->CreateRenderDelegate());
+
+  auto hgi = pxr::Hgi::CreatePlatformDefaultHgi();
+
+  auto hgi_driver = std::make_unique<pxr::HdDriver>(
+      pxr::HgiTokens->renderDriver,
+      pxr::VtValue(hgi.get()));
+
+  auto hd_render_index =
+      absl::WrapUnique<pxr::HdRenderIndex>(pxr::HdRenderIndex::New(
+          hd_render_delegate.get(), {hgi_driver.get()}));
+
+  auto usd_imaging_delegate = std::make_unique<pxr::UsdImagingDelegate>(
+      hd_render_index.get(), pxr::SdfPath::AbsoluteRootPath());
+  usd_imaging_delegate->Populate(world_stage_->GetDefaultPrim()); */
+
+  pxr::UsdImagingGLEngine::Parameters usd_imaging_gl_engine_params;
+  usd_imaging_gl_engine_params.rootPath =
+      world_stage_->GetPseudoRoot().GetPath();
+
+  pxr::UsdImagingGLEngine usd_imaging_gl_engine(
+      usd_imaging_gl_engine_params);
+  usd_imaging_gl_engine.SetRendererPlugin(
+      pxr::TfToken{"HdEmbreeRendererPlugin"});
+
+  usd_imaging_gl_engine.SetCameraPath(pxr::SdfPath(camera_path));
+  usd_imaging_gl_engine.SetRenderViewport({0, 0, 640, 480});
+  usd_imaging_gl_engine.Render();
+  while (!usd_imaging_gl_engine.IsConverged()) {
+    usd_imaging_gl_engine.Render();
+    std::thread::sleep(5);
+  }
+
+  // Copy render buffers to output buffers.
+  std::vector<mjImageOutputBuffer> results;
+  for (size_t i = 0; i < render_buffer_count; i++) {
+    results.emplace_back();
+    auto output_buffer = results.rbegin();
+    pxr::HdRenderBuffer* render_buffer =
+        usd_imaging_google_engine.GetRenderBuffer(i);
+    output_buffer->width = render_buffer->GetWidth();
+    output_buffer->height = render_buffer->GetHeight();
+    output_buffer->format = render_buffer->GetFormat();
+    auto& aovId = usd_imaging_google_engine.GetAovId(i);
+    output_buffer->aovId = aovId.channel_name;
+    output_buffer->type = aovId.render_var.dataType.GetString();
+    const size_t format_byte_size = HdDataSizeOfFormat(output_buffer->format);
+    const size_t data_byte_size =
+        output_buffer->width * output_buffer->height * format_byte_size;
+    output_buffer->buffer.resize(data_byte_size);
+
+    void* data = render_buffer->Map();
+    memcpy(output_buffer->buffer.data(), data, data_byte_size);
+    render_buffer->Unmap();
+  }
+
+  return std::vector<mjImageOutputBuffer>();
+}
+
+absl::StatusOr<std::vector<mjImageOutputBuffer>>
 CircusExperimental::RenderCamera(const std::string& scene_path) {
   // Try this
   pxr::HdRendererPluginRegistry& plugin_registry =

@@ -297,7 +297,7 @@ absl::Status MujocoToUsd::InitializeUsdPhysicsJoint(
       }
       case mjJNT_BALL: {
         // Ball joints create all 3 degrees of rotational freedom
-	for (const auto& limit_type : {"RotX", "RotY", "RotZ"}) {
+	      for (const auto& limit_type : {"RotX", "RotY", "RotZ"}) {
           auto joint_property =
               pxr::TfToken(absl::StrCat("limit:", limit_type));
 
@@ -305,9 +305,9 @@ absl::Status MujocoToUsd::InitializeUsdPhysicsJoint(
               world_stage_,
               usd_physics_joint.GetPath().AppendProperty(joint_property));
           usd_physics_limit_api.GetLowAttr().Set<float>(
-              mjmodel_->jnt_range[2 * mujoco_joint_index);
+              mjmodel_->jnt_range[2 * mujoco_joint_index]);
           usd_physics_limit_api.GetHighAttr().Set<float>(
-              mjmodel_->jnt_range[2 * mujoco_joint_index + 1));
+              mjmodel_->jnt_range[2 * mujoco_joint_index + 1]);
         }
         break;
       }
@@ -319,9 +319,9 @@ absl::Status MujocoToUsd::InitializeUsdPhysicsJoint(
             world_stage_,
             usd_physics_joint.GetPath().AppendProperty(joint_property));
         usd_physics_limit_api.GetLowAttr().Set<float>(
-            mjmodel_->jnt_range[2 * mujoco_joint_index);
+            mjmodel_->jnt_range[2 * mujoco_joint_index]);
         usd_physics_limit_api.GetHighAttr().Set<float>(
-            mjmodel_->jnt_range[2 * mujoco_joint_index + 1));
+            mjmodel_->jnt_range[2 * mujoco_joint_index + 1]);
         break;
       }
       case mjJNT_SLIDE: {
@@ -332,9 +332,9 @@ absl::Status MujocoToUsd::InitializeUsdPhysicsJoint(
             world_stage_,
             usd_physics_joint.GetPath().AppendProperty(joint_property));
         usd_physics_limit_api.GetLowAttr().Set<float>(
-            mjmodel_->jnt_range[2 * mujoco_joint_index);
+            mjmodel_->jnt_range[2 * mujoco_joint_index]);
         usd_physics_limit_api.GetHighAttr().Set<float>(
-            mjmodel_->jnt_range[2 * mujoco_joint_index + 1));
+            mjmodel_->jnt_range[2 * mujoco_joint_index + 1]);
         break;
       }
       default: {
