@@ -1,0 +1,61 @@
+#usda 1.0
+(
+    defaultPrim = "Fridge"
+    endTimeCode = 100
+    metersPerUnit = 0.01
+    startTimeCode = 0
+    subLayers = [
+        @./JointExample_physics.usda@,
+        @./JointExample_geo.usda@
+    ]
+    timeCodesPerSecond = 24
+    upAxis = "Y"
+)
+
+def Xform "Fridge"
+{
+	double3 xformOp:rotateXYZ = (0, 0, 0)
+	double3 xformOp:scale = (1, 1, 1)
+	double3 xformOp:translate = (0, 4.502560122187823, 0)
+	uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+
+	def Xform "Body" (
+		delete apiSchemas = ["PhysicsRigidBodyAPI", "PhysxRigidBodyAPI"]
+		prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysxRigidBodyAPI"]
+	)
+	{
+		bool physics:kinematicEnabled = 0
+		bool physics:rigidBodyEnabled = 1
+		double3 xformOp:rotateXYZ = (0, 0, 0)
+		double3 xformOp:scale = (1, 1, 1)
+		double3 xformOp:translate = (-129.9331310903214, 50.428115025111545, 0)
+		uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+	}
+
+	def Xform "Door" (
+		delete apiSchemas = ["PhysicsRigidBodyAPI", "PhysxRigidBodyAPI"]
+		prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysxRigidBodyAPI"]
+	)
+	{
+		bool physics:kinematicEnabled = 0
+		bool physics:rigidBodyEnabled = 1
+		double3 xformOp:rotateXYZ = (0, 0, 0)
+		double3 xformOp:scale = (1, 1, 1)
+		double3 xformOp:translate = (-74.30497346645562, 50.42016373396168, 0)
+		uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+	}
+}
+
+over "Body" (
+	active = false
+)
+{
+}
+
+over "Door" (
+	active = false
+)
+{
+}
+
+

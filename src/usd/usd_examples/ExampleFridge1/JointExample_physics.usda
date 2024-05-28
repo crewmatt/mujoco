@@ -1,0 +1,59 @@
+#usda 1.0
+(
+    upAxis = "Y"
+)
+
+over "Fridge"
+{
+	over "Body"
+	{
+		def Cube "Body_col" (
+			delete apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI"]
+			prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI"]
+		)
+		{
+			float3[] extent = [(-50, -50, -50), (50, 50, 50)]
+			bool physics:collisionEnabled = 1
+			double size = 100
+			double3 xformOp:rotateXYZ = (0, 0, 0)
+			double3 xformOp:scale = (1, 1, 1)
+			double3 xformOp:translate = (0, 0, 0)
+			uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+		}
+	}
+
+	over "Door"
+	{
+		def Cube "Door_col" (
+			prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI"]
+		)
+		{
+			float3[] extent = [(-50, -50, -50), (50, 50, 50)]
+			bool physics:collisionEnabled = 1
+			double size = 100
+			double3 xformOp:rotateXYZ = (0, 0, 0)
+			double3 xformOp:scale = (0.1, 1, 1)
+			double3 xformOp:translate = (0, 0, 0)
+			uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+		}
+	}
+
+	def Scope "Joints"
+	{
+		def PhysicsRevoluteJoint "RevoluteJoint"
+		{
+			uniform token physics:axis = "Y"
+			rel physics:body0 = </Fridge/Door>
+			rel physics:body1 = </Fridge/Body>
+			float physics:breakForce = inf
+			float physics:breakTorque = inf
+			bool physics:collisionEnabled = 1
+			point3f physics:localPos0 = (-5.4067726, -2.2992454, 50.033714)
+			point3f physics:localPos1 = (50.221386, -2.3071969, 50.033714)
+			quatf physics:localRot0 = (1, 0, 0, 0)
+			quatf physics:localRot1 = (1, 0, 0, 0)
+		}
+	}
+}
+
+

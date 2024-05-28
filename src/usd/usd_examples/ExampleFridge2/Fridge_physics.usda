@@ -1,0 +1,25 @@
+#usda 1.0
+(
+    upAxis = "Y"
+)
+
+over "Fridge"
+{
+    def Scope "Joints"
+    {
+        def PhysicsRevoluteJoint "Door_body_revolute_joint"
+        {
+            uniform token physics:axis = "Y"
+            rel physics:body0 = </Fridge/Body>
+            rel physics:body1 = </Fridge/Door>
+            float physics:breakForce = inf
+            float physics:breakTorque = inf
+            bool physics:collisionEnabled = 1
+            point3f physics:localPos0 = (50.0349, 0, 50.192055)
+            point3f physics:localPos1 = (-49.75099, 0, 50.192055)
+            quatf physics:localRot0 = (1, 0, 0, 0)
+            quatf physics:localRot1 = (1, 0, 0, 0)
+        }
+    }
+}
+
